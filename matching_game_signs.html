@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Matching - Bảng Hiệu Trường Đại Học</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+            background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%);
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #d63031;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #636e72;
+            margin-bottom: 30px;
+            font-style: italic;
+            font-size: 1.2em;
+        }
+        
+        .instructions {
+            background: #e8f5e8;
+            border: 2px solid #00b894;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .instructions h3 {
+            color: #00b894;
+            margin-top: 0;
+        }
+        
+        .game-controls {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        button {
+            background: #6c5ce7;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: #5f3dc4;
+            transform: translateY(-2px);
+        }
+        
+        .timer {
+            text-align: center;
+            font-size: 1.5em;
+            color: #d63031;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        
+        .score {
+            text-align: center;
+            font-size: 1.2em;
+            color: #00b894;
+            margin-bottom: 20px;
+        }
+        
+        .game-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .vietnamese-signs, .thai-meanings {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 500px;
+        }
+        
+        .column-title {
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #2d3436;
+        }
+        
+        .sign-item, .meaning-item {
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 14px;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .sign-item {
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            color: white;
+            font-weight: bold;
+        }
+        
+        .meaning-item {
+            background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+            color: white;
+            font-weight: bold;
+        }
+        
+        .sign-item:hover, .meaning-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .sign-item.selected {
+            border-color: #fdcb6e;
+            box-shadow: 0 0 20px rgba(253, 203, 110, 0.7);
+            transform: scale(1.08);
+        }
+        
+        .meaning-item.selected {
+            border-color: #fdcb6e;
+            box-shadow: 0 0 20px rgba(253, 203, 110, 0.7);
+            transform: scale(1.08);
+        }
+        
+        .sign-item.matched, .meaning-item.matched {
+            background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+            border-color: #00b894;
+            cursor: default;
+            opacity: 0.8;
+        }
+        
+        .sign-item.wrong, .meaning-item.wrong {
+            background: linear-gradient(135deg, #e17055 0%, #d63031 100%);
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .completion-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            border: 3px solid #00b894;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            font-size: 2em;
+            color: #00b894;
+            font-weight: bold;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: none;
+            min-width: 300px;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            display: none;
+        }
+        
+        .progress {
+            width: 100%;
+            height: 20px;
+            background: #ddd;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        @media (max-width: 768px) {
+            .game-area {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .sign-item, .meaning-item {
+                font-size: 12px;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 GAME MATCHING</h1>
+        <p class="subtitle">Ghép bảng hiệu tiếng Việt với nghĩa tiếng Thái (7 phút)</p>
+        
+        <div class="instructions">
+            <h3>📋 Cách chơi:</h3>
+            <ol>
+                <li><strong>Click vào bảng hiệu</strong> tiếng Việt (màu xanh)</li>
+                <li><strong>Click vào nghĩa</strong> tiếng Thái tương ứng (màu hồng)</li>
+                <li><strong>Đúng:</strong> Cả hai sẽ chuyển màu xanh lá</li>
+                <li><strong>Sai:</strong> Cả hai sẽ nhấp nháy màu đỏ</li>
+                <li><strong>Mục tiêu:</strong> Ghép đúng tất cả 10 cặp trong 7 phút</li>
+            </ol>
+        </div>
+        
+        <div class="game-controls">
+            <button onclick="startGame()">🎮 Bắt đầu chơi</button>
+            <button onclick="resetGame()">🔄 Chơi lại</button>
+            <button onclick="showHint()">💡 Gợi ý</button>
+            <button onclick="toggleMusic()">🎵 Nhạc: ON</button>
+        </div>
+        
+        <!-- Background Music -->
+        <audio id="backgroundMusic" loop>
+            <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA" type="audio/mpeg">
+        </audio>
+        
+        <div class="timer" id="timer">⏰ Thời gian: 7:00</div>
+        <div class="score" id="score">📊 Điểm: 0/10</div>
+        
+        <div class="progress">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        
+        <div class="overlay" id="overlay"></div>
+        
+        <div class="completion-message" id="completionMessage">
+            🎉 Chúc mừng! Bạn đã hoàn thành!
+            <div style="margin-top: 15px;">
+                <button onclick="resetGame()" style="font-size: 0.6em; padding: 10px 20px;">🔄 Chơi lại</button>
+            </div>
+        </div>
+        
+        <div class="game-area">
+            <div class="vietnamese-signs">
+                <div class="column-title">🇻🇳 BẢNG HIỆU TIẾNG VIỆT</div>
+                <div id="vietnameseSigns"></div>
+            </div>
+            
+            <div class="thai-meanings">
+                <div class="column-title">🇹🇭 NGHĨA TIẾNG THÁI</div>
+                <div id="thaiMeanings"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 10 cặp bảng hiệu từ Bài 1
+        const signPairs = [
+            { 
+                vietnamese: "Tòa nhà A", 
+                thai: "ตึก A",
+                hint: "Tên tòa nhà có chữ cái đầu tiên"
+            },
+            { 
+                vietnamese: "Thư viện ← Tầng 2", 
+                thai: "ห้องสมุด ← ชั้น 2",
+                hint: "Nơi có nhiều sách, ở tầng 2"
+            },
+            { 
+                vietnamese: "Căng tin → 50m", 
+                thai: "โรงอาหาร → 50 เมตร",
+                hint: "Nơi ăn cơm, cách đây 50m"
+            },
+            { 
+                vietnamese: "Lối ra ↑", 
+                thai: "ทางออก ↑",
+                hint: "Exit, hướng lên trên"
+            },
+            { 
+                vietnamese: "WC Nam/Nữ", 
+                thai: "ห้องน้ำชาย/หญิง",
+                hint: "Toilet cho nam và nữ"
+            },
+            { 
+                vietnamese: "Phòng học 101", 
+                thai: "ห้อง 101",
+                hint: "Classroom số 101"
+            },
+            { 
+                vietnamese: "Phòng máy tính", 
+                thai: "ห้องคอมพิวเตอร์",
+                hint: "Computer lab"
+            },
+            { 
+                vietnamese: "Văn phòng Khoa", 
+                thai: "สำนักงานคณะ",
+                hint: "Faculty office"
+            },
+            { 
+                vietnamese: "Tòa nhà Hành chính", 
+                thai: "ตึกอำนวยการ",
+                hint: "Administrative building"
+            },
+            { 
+                vietnamese: "Ký túc xá", 
+                thai: "หอพัก",
+                hint: "Dormitory, nơi sinh viên ở"
+            }
+        ];
+
+        let gameStarted = false;
+        let timeLeft = 420; // 7 minutes in seconds
+        let score = 0;
+        let selectedVietnamese = null;
+        let selectedThai = null;
+        let matchedPairs = 0;
+        let gameTimer = null;
+        let shuffledVietnamese = [];
+        let shuffledThai = [];
+        let musicEnabled = true;
+
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        function initializeGame() {
+            // Shuffle the arrays separately
+            shuffledVietnamese = shuffleArray(signPairs);
+            shuffledThai = shuffleArray(signPairs);
+            
+            const vietnameseContainer = document.getElementById('vietnameseSigns');
+            const thaiContainer = document.getElementById('thaiMeanings');
+            
+            vietnameseContainer.innerHTML = '';
+            thaiContainer.innerHTML = '';
+            
+            // Create Vietnamese signs
+            shuffledVietnamese.forEach((pair, index) => {
+                const signElement = document.createElement('div');
+                signElement.className = 'sign-item';
+                signElement.textContent = pair.vietnamese;
+                signElement.dataset.id = signPairs.indexOf(pair);
+                signElement.onclick = () => selectVietnamese(signElement);
+                vietnameseContainer.appendChild(signElement);
+            });
+            
+            // Create Thai meanings
+            shuffledThai.forEach((pair, index) => {
+                const meaningElement = document.createElement('div');
+                meaningElement.className = 'meaning-item';
+                meaningElement.textContent = pair.thai;
+                meaningElement.dataset.id = signPairs.indexOf(pair);
+                meaningElement.onclick = () => selectThai(meaningElement);
+                thaiContainer.appendChild(meaningElement);
+            });
+        }
+
+        function selectVietnamese(element) {
+            if (!gameStarted || element.classList.contains('matched')) return;
+            
+            // Remove previous selection
+            document.querySelectorAll('.sign-item.selected').forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            selectedVietnamese = element;
+            element.classList.add('selected');
+            
+            if (selectedThai) {
+                checkMatch();
+            }
+        }
+
+        function selectThai(element) {
+            if (!gameStarted || element.classList.contains('matched')) return;
+            
+            // Remove previous selection
+            document.querySelectorAll('.meaning-item.selected').forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            selectedThai = element;
+            element.classList.add('selected');
+            
+            if (selectedVietnamese) {
+                checkMatch();
+            }
+        }
+
+        function checkMatch() {
+            const vietnameseId = selectedVietnamese.dataset.id;
+            const thaiId = selectedThai.dataset.id;
+            
+            if (vietnameseId === thaiId) {
+                // Correct match
+                selectedVietnamese.classList.add('matched');
+                selectedThai.classList.add('matched');
+                selectedVietnamese.classList.remove('selected');
+                selectedThai.classList.remove('selected');
+                
+                matchedPairs++;
+                score = matchedPairs; // 1 điểm mỗi cặp
+                updateScore();
+                updateProgress();
+                
+                // Success sound effect (visual feedback)
+                selectedVietnamese.style.transform = 'scale(1.2)';
+                selectedThai.style.transform = 'scale(1.2)';
+                
+                setTimeout(() => {
+                    selectedVietnamese.style.transform = '';
+                    selectedThai.style.transform = '';
+                }, 200);
+                
+                if (matchedPairs === signPairs.length) {
+                    endGame(true);
+                }
+            } else {
+                // Wrong match
+                selectedVietnamese.classList.add('wrong');
+                selectedThai.classList.add('wrong');
+                
+                setTimeout(() => {
+                    selectedVietnamese.classList.remove('wrong', 'selected');
+                    selectedThai.classList.remove('wrong', 'selected');
+                }, 500);
+            }
+            
+            selectedVietnamese = null;
+            selectedThai = null;
+        }
+
+        function startGame() {
+            gameStarted = true;
+            timeLeft = 420;
+            score = 0;
+            matchedPairs = 0;
+            
+            // Hide overlay and message
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('completionMessage').style.display = 'none';
+            
+            // Start background music
+            if (musicEnabled) {
+                const music = document.getElementById('backgroundMusic');
+                // Create a simple background tune using Web Audio API
+                playBackgroundMusic();
+            }
+            
+            initializeGame();
+            updateScore();
+            updateProgress();
+            
+            gameTimer = setInterval(() => {
+                timeLeft--;
+                updateTimer();
+                
+                if (timeLeft <= 0) {
+                    endGame(false);
+                }
+            }, 1000);
+        }
+
+        function resetGame() {
+            gameStarted = false;
+            clearInterval(gameTimer);
+            timeLeft = 420;
+            score = 0;
+            matchedPairs = 0;
+            selectedVietnamese = null;
+            selectedThai = null;
+            
+            // Hide overlay and message
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('completionMessage').style.display = 'none';
+            
+            // Stop background music
+            const music = document.getElementById('backgroundMusic');
+            music.pause();
+            music.currentTime = 0;
+            
+            updateTimer();
+            updateScore();
+            updateProgress();
+            
+            initializeGame();
+        }
+
+        function updateTimer() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('timer').textContent = 
+                `⏰ Thời gian: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function updateScore() {
+            document.getElementById('score').textContent = `📊 Điểm: ${score}/10`;
+        }
+
+        function updateProgress() {
+            const progress = (matchedPairs / signPairs.length) * 100;
+            document.getElementById('progressBar').style.width = `${progress}%`;
+        }
+
+        function endGame(won) {
+            gameStarted = false;
+            clearInterval(gameTimer);
+            
+            // Pause background music
+            const music = document.getElementById('backgroundMusic');
+            music.pause();
+            
+            const overlay = document.getElementById('overlay');
+            const message = document.getElementById('completionMessage');
+            
+            if (won) {
+                message.innerHTML = `
+                    🎉 Xuất sắc! Hoàn thành!<br>
+                    <div style="font-size: 0.6em; margin: 10px 0;">
+                        ⏰ Thời gian: ${Math.floor((420 - timeLeft) / 60)}:${((420 - timeLeft) % 60).toString().padStart(2, '0')}<br>
+                        📊 Điểm: ${score}/10
+                    </div>
+                    <button onclick="resetGame()" style="font-size: 0.5em; padding: 10px 20px; margin-top: 10px;">🔄 Chơi lại</button>
+                `;
+                message.style.color = '#00b894';
+                message.style.borderColor = '#00b894';
+            } else {
+                message.innerHTML = `
+                    ⏰ Hết giờ!<br>
+                    <div style="font-size: 0.6em; margin: 10px 0;">
+                        📊 Điểm: ${score}/10 cặp<br>
+                        🎯 Cố gắng lần sau nhé!
+                    </div>
+                    <button onclick="resetGame()" style="font-size: 0.5em; padding: 10px 20px; margin-top: 10px;">🔄 Chơi lại</button>
+                `;
+                message.style.color = '#d63031';
+                message.style.borderColor = '#d63031';
+            }
+            
+            overlay.style.display = 'block';
+            message.style.display = 'block';
+        }
+
+        function showHint() {
+            if (!gameStarted) {
+                alert('Hãy bắt đầu game trước!');
+                return;
+            }
+            
+            // Find first unmatched pair
+            const unmatchedPair = signPairs.find((pair, index) => {
+                const vietnameseElement = document.querySelector(`[data-id="${index}"].sign-item`);
+                return !vietnameseElement.classList.contains('matched');
+            });
+            
+            if (unmatchedPair) {
+                alert(`💡 Gợi ý: ${unmatchedPair.hint}`);
+            }
+        }
+        
+        function toggleMusic() {
+            musicEnabled = !musicEnabled;
+            const button = document.querySelector('button[onclick="toggleMusic()"]');
+            button.textContent = musicEnabled ? '🎵 Nhạc: ON' : '🎵 Nhạc: OFF';
+            
+            if (!musicEnabled) {
+                const music = document.getElementById('backgroundMusic');
+                music.pause();
+            } else if (gameStarted) {
+                playBackgroundMusic();
+            }
+        }
+        
+        function playBackgroundMusic() {
+            // Cheerful background music using Web Audio API
+            if (!musicEnabled) return;
+            
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                let currentOscillator = null;
+                
+                // Happy, upbeat melody notes (C major scale)
+                const melody = [
+                    { freq: 261.63, duration: 400 }, // C4
+                    { freq: 293.66, duration: 400 }, // D4
+                    { freq: 329.63, duration: 400 }, // E4
+                    { freq: 349.23, duration: 400 }, // F4
+                    { freq: 392.00, duration: 600 }, // G4 (longer)
+                    { freq: 349.23, duration: 400 }, // F4
+                    { freq: 329.63, duration: 400 }, // E4
+                    { freq: 293.66, duration: 400 }, // D4
+                    { freq: 261.63, duration: 800 }, // C4 (longer)
+                    { freq: 0, duration: 200 },      // Rest
+                    { freq: 329.63, duration: 400 }, // E4
+                    { freq: 392.00, duration: 400 }, // G4
+                    { freq: 440.00, duration: 600 }, // A4 (longer)
+                    { freq: 392.00, duration: 400 }, // G4
+                    { freq: 329.63, duration: 800 }, // E4 (longer)
+                    { freq: 0, duration: 400 }       // Rest
+                ];
+                
+                let noteIndex = 0;
+                
+                const playNextNote = () => {
+                    if (!gameStarted || !musicEnabled) return;
+                    
+                    const note = melody[noteIndex % melody.length];
+                    
+                    if (note.freq > 0) { // Play note
+                        currentOscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        currentOscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        // Use triangle wave for softer, pleasant sound
+                        currentOscillator.type = 'triangle';
+                        currentOscillator.frequency.setValueAtTime(note.freq, audioContext.currentTime);
+                        
+                        // Gentle volume with fade in/out
+                        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                        gainNode.gain.linearRampToValueAtTime(0.08, audioContext.currentTime + 0.05);
+                        gainNode.gain.linearRampToValueAtTime(0.06, audioContext.currentTime + note.duration/1000 - 0.05);
+                        gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + note.duration/1000);
+                        
+                        currentOscillator.start(audioContext.currentTime);
+                        currentOscillator.stop(audioContext.currentTime + note.duration/1000);
+                    }
+                    
+                    noteIndex++;
+                    setTimeout(playNextNote, note.duration);
+                };
+                
+                playNextNote();
+                
+            } catch (e) {
+                console.log('Audio not supported');
+                // Fallback: Try to play a simple cheerful beep pattern
+                playSimpleCheerfulMusic();
+            }
+        }
+        
+        function playSimpleCheerfulMusic() {
+            // Fallback cheerful music for older browsers
+            if (!musicEnabled || !gameStarted) return;
+            
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Simple cheerful pattern: high-low-high-low with gentle volume
+                const playCheerfulBeep = (frequency, startTime, duration) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.type = 'triangle';
+                    oscillator.frequency.setValueAtTime(frequency, startTime);
+                    gainNode.gain.setValueAtTime(0.05, startTime);
+                    
+                    oscillator.start(startTime);
+                    oscillator.stop(startTime + duration);
+                };
+                
+                // Play gentle cheerful pattern every 4 seconds
+                const playPattern = () => {
+                    if (!gameStarted || !musicEnabled) return;
+                    
+                    const now = audioContext.currentTime;
+                    playCheerfulBeep(523.25, now, 0.2);        // C5
+                    playCheerfulBeep(659.25, now + 0.3, 0.2); // E5
+                    playCheerfulBeep(783.99, now + 0.6, 0.3); // G5
+                    
+                    setTimeout(playPattern, 4000);
+                };
+                
+                setTimeout(playPattern, 1000);
+                
+            } catch (e) {
+                console.log('Simple audio also not supported');
+            }
+        }
+
+        // Initialize game on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeGame();
+            updateTimer();
+            updateScore();
+        });
+    </script>
+</body>
+</html>
